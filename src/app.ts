@@ -4,6 +4,8 @@ import { GetUsersController } from "./controllers/get-users/get-users";
 import { PrismaGetUsersRepository } from "./repositories/get-users/prisma-get-users";
 import { PrismaCreateUserRepository } from "./repositories/create-user/prisma-create-user";
 import { CreateUserController } from "./controllers/create-user/create-user";
+import { PrismaUpdateUserRepository } from "./repositories/update-user/prisma-update-user";
+import { UpdateUserController } from "./controllers/update-user/update-user";
 config();
 
 const app = express();
@@ -26,6 +28,20 @@ app.post("/users", async (req, res) => {
   );
 
   const { statusCode, body } = await createUserController.handle({
+    body: req.body,
+  });
+
+  res.status(statusCode).send(body);
+});
+
+app.patch("/users/:id", async (req, res) => {
+  const prismaUpdateUserRepository = new PrismaUpdateUserRepository();
+  const updateUserController = new UpdateUserController(
+    prismaUpdateUserRepository
+  );
+
+  const { statusCode, body } = await updateUserController.handle({
+    params: req.params,
     body: req.body,
   });
 

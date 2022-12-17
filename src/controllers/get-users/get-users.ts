@@ -1,6 +1,6 @@
 import { IGetUsersController, IGetUsersRepository } from "./protocols";
 
-export class GetusersController implements IGetUsersController {
+export class GetUsersController implements IGetUsersController {
   constructor(private readonly getUsersRepository: IGetUsersRepository) {}
 
   async handle() {
@@ -9,7 +9,7 @@ export class GetusersController implements IGetUsersController {
 
       return {
         statusCode: 200,
-        body: users,
+        body: users.map(({ password, ...rest }) => rest),
       };
     } catch (error) {
       return {

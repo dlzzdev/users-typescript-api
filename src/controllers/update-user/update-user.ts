@@ -2,28 +2,23 @@ import validator from "validator";
 import { prisma } from "../../database/prisma";
 import { User } from "../../models/user";
 import { HttpRequest, HttpResponse, IController } from "../protocols";
+import { badRequest, ok, serverError } from "../utils";
 import { IUpdateUserRepository, UpdateUserParams } from "./protocols";
 
 export class UpdateUserController implements IController {
   constructor(private readonly updateUserRepository: IUpdateUserRepository) {}
   async handle(
     httpRequest: HttpRequest<UpdateUserParams>
-  ): Promise<HttpResponse<User>> {
+  ): Promise<HttpResponse<User | string>> {
     try {
       const { id } = httpRequest.params;
 
       if (!id) {
-        return {
-          statusCode: 400,
-          body: "Missing param: id",
-        };
+        return badRequest("Missing user id");
       }
 
       if (!httpRequest.body) {
-        return {
-          statusCode: 400,
-          body: "Bad Request",
-        };
+        return badRequest("Missing request body");
       }
 
       const { firstName, lastName, email, password } = httpRequest.body;
@@ -32,10 +27,7 @@ export class UpdateUserController implements IController {
         const emailIsValid = validator.isEmail(email);
 
         if (!emailIsValid) {
-          return {
-            statusCode: 400,
-            body: "Email is not valid",
-          };
+          return badRequest("Invalid email.");
         }
 
         const emailAlreadyExists = await prisma.user.findUnique({
@@ -43,10 +35,7 @@ export class UpdateUserController implements IController {
         });
 
         if (emailAlreadyExists) {
-          return {
-            statusCode: 400,
-            body: "Email already exists",
-          };
+          return badRequest("Email already exists.");
         }
       }
 
@@ -57,16 +46,9 @@ export class UpdateUserController implements IController {
         password,
       });
 
-      return {
-        statusCode: 200,
-        body: user,
-      };
+      return ok<User>(user);
     } catch (error) {
-      console.log(error);
-      return {
-        statusCode: 500,
-        body: "Internal Server Error",
-      };
+      return serverError();
     }
   }
 }

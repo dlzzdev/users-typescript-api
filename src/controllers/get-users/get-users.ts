@@ -1,22 +1,19 @@
-import { IController } from "../protocols";
+import { User } from "../../models/user";
+import { HttpResponse, IController } from "../protocols";
+import { ok, serverError } from "../utils";
 import { IGetUsersRepository } from "./protocols";
 
 export class GetUsersController implements IController {
   constructor(private readonly getUsersRepository: IGetUsersRepository) {}
 
-  async handle() {
+  async handle(): Promise<HttpResponse<User[] | string>> {
     try {
       const users = await this.getUsersRepository.getUsers();
+      const usersWithoutPassword = users.map(({ password, ...rest }) => rest);
 
-      return {
-        statusCode: 200,
-        body: users.map(({ password, ...rest }) => rest),
-      };
+      return ok<User[]>(usersWithoutPassword);
     } catch (error) {
-      return {
-        statusCode: 500,
-        body: "Internal Server Error",
-      };
+      return serverError();
     }
   }
 }

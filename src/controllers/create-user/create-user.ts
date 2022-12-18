@@ -2,22 +2,17 @@ import validator from "validator";
 import { prisma } from "../../database/prisma";
 import { User } from "../../models/user";
 import { HttpRequest, HttpResponse, IController } from "../protocols";
-import {
-  CreateUserParams,
-  ICreateUserRepository,
-} from "./protocols";
+import { badRequest, created } from "../utils";
+import { CreateUserParams, ICreateUserRepository } from "./protocols";
 
 export class CreateUserController implements IController {
   constructor(private readonly createUserRepository: ICreateUserRepository) {}
   async handle(
     httpRequest: HttpRequest<CreateUserParams>
-  ): Promise<HttpResponse<User>> {
+  ): Promise<HttpResponse<User | string>> {
     try {
       if (!httpRequest.body) {
-        return {
-          statusCode: 400,
-          body: "Bad Request",
-        };
+        return badRequest("Missing request body");
       }
 
       const requiredFields: string[] = [
@@ -29,10 +24,7 @@ export class CreateUserController implements IController {
 
       for (const field of requiredFields) {
         if (!httpRequest.body.hasOwnProperty(field)) {
-          return {
-            statusCode: 400,
-            body: `Missing param: ${field}`,
-          };
+          return badRequest(`${field} is required.`);
         }
       }
 
@@ -41,10 +33,7 @@ export class CreateUserController implements IController {
       const emailIsValid = validator.isEmail(email);
 
       if (!emailIsValid) {
-        return {
-          statusCode: 400,
-          body: "Email is not valid",
-        };
+        return badRequest("Invalid email.");
       }
 
       const emailAlreadyExists = await prisma.user.findUnique({
@@ -52,10 +41,7 @@ export class CreateUserController implements IController {
       });
 
       if (emailAlreadyExists) {
-        return {
-          statusCode: 400,
-          body: "Email already exists",
-        };
+        return badRequest("Email already exists.");
       }
 
       const user = await this.createUserRepository.createUser({
@@ -65,10 +51,7 @@ export class CreateUserController implements IController {
         password,
       });
 
-      return {
-        statusCode: 201,
-        body: user,
-      };
+      return created<User>(user);
     } catch (error) {
       console.log(error);
       return {

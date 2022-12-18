@@ -6,6 +6,8 @@ import { PrismaCreateUserRepository } from "./repositories/create-user/prisma-cr
 import { CreateUserController } from "./controllers/create-user/create-user";
 import { PrismaUpdateUserRepository } from "./repositories/update-user/prisma-update-user";
 import { UpdateUserController } from "./controllers/update-user/update-user";
+import { PrismaDeleteUserRepository } from "./repositories/delete-user/prisma-delete-user";
+import { DeleteUserController } from "./controllers/delete-user/delete-user";
 config();
 
 const app = express();
@@ -43,6 +45,19 @@ app.patch("/users/:id", async (req, res) => {
   const { statusCode, body } = await updateUserController.handle({
     params: req.params,
     body: req.body,
+  });
+
+  res.status(statusCode).send(body);
+});
+
+app.delete("/users/:id", async (req, res) => {
+  const prismaDeleteUserRepository = new PrismaDeleteUserRepository();
+  const deleteUserController = new DeleteUserController(
+    prismaDeleteUserRepository
+  );
+
+  const { statusCode, body } = await deleteUserController.handle({
+    params: req.params,
   });
 
   res.status(statusCode).send(body);

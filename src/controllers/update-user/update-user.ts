@@ -23,6 +23,16 @@ export class UpdateUserController implements IController {
 
       const { firstName, lastName, email, password } = httpRequest.body;
 
+      const idExists = await prisma.user.findUnique({
+        where: {
+          id: +id,
+        },
+      });
+
+      if (!idExists) {
+        return badRequest(`User with id ${id} does not exist`);
+      }
+
       if (email) {
         const emailIsValid = validator.isEmail(email);
 

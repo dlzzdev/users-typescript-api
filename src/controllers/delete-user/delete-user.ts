@@ -1,3 +1,4 @@
+import { prisma } from "../../database/prisma";
 import { User } from "../../models/user";
 import { HttpRequest, HttpResponse, IController } from "../protocols";
 import { badRequest, ok, serverError } from "../utils";
@@ -13,6 +14,16 @@ export class DeleteUserController implements IController {
 
       if (!id) {
         return badRequest("Missing user id");
+      }
+
+      const idExists = await prisma.user.findUnique({
+        where: {
+          id: +id,
+        },
+      });
+
+      if (!idExists) {
+        return badRequest(`User with id ${id} does not exist`);
       }
 
       const user = await this.deleteUserRepository.deleteUser(id);
